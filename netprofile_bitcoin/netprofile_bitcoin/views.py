@@ -34,9 +34,11 @@ from pyramid.i18n import (
 
 #from here, there are several methods added
 #that are not in the original lib
-#https://github.com/annndrey/bitcoin-python
+#https://github.com/nikitos/bitcoin-python
 import re
 import bitcoinrpc
+from decimal import Decimal
+import json
 
 from pyramid.view import view_config
 from pyramid.httpexceptions import (
@@ -50,7 +52,9 @@ from netprofile.common.factory import RootFactory
 from netprofile.common.hooks import register_hook
 from netprofile.db.connection import DBSession
 
-from netprofile_access.models import AccessEntity
+from netprofile_access.models import AccessEntity,AccessEntityLink
+
+from netprofile_bitcoin.check_input_fields import not_empty_int, not_empty_float,not_empty_str,string_wallet_name 
 
 _ = TranslationStringFactory('netprofile_bitcoin')
 
@@ -70,40 +74,97 @@ def export_key(request):
 	addr = request.GET.get('addr', None)
 	if addr:
 		resp['privkey'] = bitcoind.dumpprivkey(addr)
-
 	return resp
-		
+
+
 @view_config(
-	route_name='bitcoin.cl.create',
+	route_name='bitcoin.cl.create_wallet',
 	permission='USAGE',
 	renderer='json'
 )
-def create_key(request):
+def create_wallet(request):
+	loc = get_localizer(request)
 	cfg = request.registry.settings
+	sess = DBSession()
+	access_user = sess.query(AccessEntity).filter_by(nick=str(request.user)).first()
 	bitcoind_host = cfg.get('netprofile.client.bitcoind.host')
 	bitcoind_port = cfg.get('netprofile.client.bitcoind.port')
 	bitcoind_login = cfg.get('netprofile.client.bitcoind.login')
 	bitcoind_password = cfg.get('netprofile.client.bitcoind.password')
+	bitcoin_link_id=cfg.get('netprofile.client.bitcoin.link_id', 1)
 	bitcoind = bitcoinrpc.connect_to_remote(bitcoind_login, bitcoind_password, host=bitcoind_host, port=bitcoind_port)
 
-	resp = {'pubkey': None}
-	newwallet = None
+	resp = {'success_create':None,
+			'error_submitting_form':None,                   
+			'error_wallet_name_field':None} 
 
-	if request.GET:
-		nextwallet = request.GET.get("newwallet", None)
-		if nextwallet:
-			newwallet = bitcoind.getnewaddress(nextwallet)
+	csrf = request.POST.get('csrf', '')
+	if csrf == request.get_csrf():
+		newwallet_create = string_wallet_name(request.POST.get("newwallet_create",''))
+
+		if newwallet_create:
+			new_wallet=bitcoind.getnewaddress(newwallet_create)
+			link = AccessEntityLink()
+			link.value=new_wallet
+			link.entity=access_user
+			link.type_id = int(bitcoin_link_id) 
+
+			resp['success_create']= loc.translate(_("New wallet successful created"))
+			return resp
+		else:
+			resp['error_wallet_name_field']=loc.translate(_("Error in the field 'Wallet name'"))
+			return resp
 	else:
-		privkey = request.POST.get('privkey', None)
-		nextwallet = request.POST.get('nextwallet', None)
+		resp['error_submitting_form']=loc.translate(_('Error submitting form'))
+		return resp
+		
 
-	
-		if privkey:
-			newwallet = bitcoind.importprivkey(privkey, nextwallet)
+@view_config(
+	route_name='bitcoin.cl.create_wallet_from_import',
+	permission='USAGE',
+	renderer='json'
+)
+def create_wallet_from_import(request):
+	loc = get_localizer(request)
+	cfg = request.registry.settings
+	sess = DBSession()
+	access_user = sess.query(AccessEntity).filter_by(nick=str(request.user)).first()	
+	bitcoind_host = cfg.get('netprofile.client.bitcoind.host')
+	bitcoind_port = cfg.get('netprofile.client.bitcoind.port')
+	bitcoind_login = cfg.get('netprofile.client.bitcoind.login')
+	bitcoind_password = cfg.get('netprofile.client.bitcoind.password')
+	bitcoin_link_id=cfg.get('netprofile.client.bitcoin.link_id', 1)
+	bitcoind = bitcoinrpc.connect_to_remote(bitcoind_login, bitcoind_password, host=bitcoind_host, port=bitcoind_port)
 
-	resp['pubkey'] = newwallet
+	resp = {'success_create': None,
+			'error_submitting_form':None,
+			'error_import_key':None,
+			'error_wallet_name_field':None}	
 
-	return resp
+	csrf = request.POST.get('csrf', '')   
+	if csrf == request.get_csrf():
+		newwallet_create_from_import = string_wallet_name(request.POST.get("newwallet_create_from_import",''))
+		privkey=not_empty_str(request.POST.get('privkey',''))
+
+		if privkey==False:
+			resp['error_import_key']=loc.translate(_("Error in the field 'Private Key'"))
+			return resp 
+
+		if len(newwallet_create_from_import)==0:
+			resp['error_wallet_name_field']=loc.translate(_("Error in the field 'Wallet name'"))
+			return resp 			
+
+		create_from_import = bitcoind.importprivkey(privkey,newwallet_create_from_import)
+		link = AccessEntityLink()
+		link.value=bitcoind.getaddressesbyaccount(newwallet_create_from_import)[0]
+		link.entity=access_user		 
+		link.type_id = int(bitcoin_link_id)
+
+		resp['success_create']=loc.translate(_("New wallet successful created"))		  
+		return resp				
+	else:
+		resp['error_submitting_form']=loc.translate(_('Error submitting form'))
+		return resp
 
 
 @view_config(
@@ -115,29 +176,29 @@ def bitcoin_walletss(request):
 	loc = get_localizer(request)
 	cfg = request.registry.settings
 	sess = DBSession()
-	errmess = None
-	tpldef = {'errmessage':errmess}
+	tpldef = {}
 	request.run_hook('access.cl.tpldef', tpldef, request)
 	access_user = sess.query(AccessEntity).filter_by(nick=str(request.user)).first()
+
 	bitcoind_host = cfg.get('netprofile.client.bitcoind.host')
 	bitcoind_port = cfg.get('netprofile.client.bitcoind.port')
 	bitcoind_login = cfg.get('netprofile.client.bitcoind.login')
 	bitcoind_password = cfg.get('netprofile.client.bitcoind.password')
-	userwallets = []
-	
+	bitcoin_link_id=cfg.get('netprofile.client.bitcoin.link_id', 1)
 	bitcoind = bitcoinrpc.connect_to_remote(bitcoind_login, bitcoind_password, host=bitcoind_host, port=bitcoind_port)
 
-	
-	userwallets = [{'wallet':wallet, 'balance':"{0}".format(float(bitcoind.getbalance(wallet))), 'address':bitcoind.getaddressesbyaccount(wallet)} for wallet in bitcoind.listaccounts() if wallet.startswith(access_user.nick)]
-	
+	userwallets = []    
+	userwallets = [{'wallet':bitcoind.getaccount(link.value).encode('latin1').decode('utf8'), 
+					'balance':"{0}".format(str(bitcoind.getbalance(bitcoind.getaccount(link.value).encode('latin1').decode('utf8') ))),
+					'address':link.value} for link in access_user.links if int(link.type_id)==int(bitcoin_link_id)]
+	tpldef.update({'wallets':userwallets})
+
+	total_balance=Decimal('0')
 	if len(userwallets) > 0:
-		nextid = max(map(int, re.findall('\d+', ",".join([w['wallet'] for w in userwallets])))) + 1
+		total_balance =sum([bitcoind.getbalance(bitcoind.getaccount(link.value)) for link in access_user.links if int(link.type_id)==int(bitcoin_link_id)])
+		tpldef['total_balance']=str(total_balance)
 	else:
-		nextid = 0
-
-	nextwallet = "{0}{1}".format(access_user.nick, nextid)
-
-	tpldef.update({'wallets':userwallets, 'nextwallet':nextwallet})
+		tpldef['total_balance']=str(total_balance)
 
 	return tpldef
 
@@ -145,8 +206,221 @@ def bitcoin_walletss(request):
 @register_hook('access.cl.menu')
 def _gen_menu(menu, req):
 	loc = get_localizer(req)
-	menu.append({
-		'route' : 'bitcoin.cl.wallet',
-		'text'  : loc.translate(_('Bitcoin Wallets'))
-	})
+	menu.append({'route' : 'bitcoin.cl.wallet',
+				 'text'  : loc.translate(_('Bitcoin Wallets'))
+			   })
 
+
+@view_config(
+	route_name='bitcoin.cl.move',
+	permission='USAGE',
+	renderer='json'
+)
+def move_coints(request):
+	loc = get_localizer(request)    
+	cfg = request.registry.settings
+	bitcoind_host = cfg.get('netprofile.client.bitcoind.host')
+	bitcoind_port = cfg.get('netprofile.client.bitcoind.port')
+	bitcoind_login = cfg.get('netprofile.client.bitcoind.login')
+	bitcoind_password = cfg.get('netprofile.client.bitcoind.password')
+	bitcoind = bitcoinrpc.connect_to_remote(bitcoind_login, bitcoind_password, host=bitcoind_host, port=bitcoind_port)
+	
+	res={'error_аmount':None,
+		 'error_submitting_form':None,
+		 'error_аmount_zero':None,
+		 'error_accounts':None,
+		 'success':None}
+
+	csrf = request.POST.get('csrf', '')
+	fromaccount = request.POST.get('fromaccount', None)
+	toaccount = request.POST.get('toaccount', None)
+	if not_empty_float(request.POST.get('аmount', ''))==False:
+		res['error_аmount']=loc.translate(_("Error in the field 'Аmount of transfer'"))
+		return res
+	else:
+		amount=Decimal(not_empty_float(request.POST.get('аmount', '')))
+	if amount==0:
+		res['error_аmount_zero']=loc.translate(_("Error.You entered zero"))
+		return res
+	if csrf == request.get_csrf(): 
+		if fromaccount and toaccount :
+			transfer=bitcoind.move(fromaccount,toaccount,amount)
+			res['success']=loc.translate(_("Money transfer has been successful"))
+			return res
+		else:
+			res['error_accounts']=loc.translate(_("Error in one of the wallet name fields"))  
+			return res		 	
+	else:
+		res['error_submitting_form']=loc.translate(_('Error submitting form'))
+		return res
+
+
+@view_config(
+	route_name='bitcoin.cl.send',
+	permission='USAGE',
+	renderer='json'
+)    
+def send_coints(request):
+	loc = get_localizer(request)
+	cfg = request.registry.settings
+	bitcoind_host = cfg.get('netprofile.client.bitcoind.host')
+	bitcoind_port = cfg.get('netprofile.client.bitcoind.port')
+	bitcoind_login = cfg.get('netprofile.client.bitcoind.login')
+	bitcoind_password = cfg.get('netprofile.client.bitcoind.password')
+	bitcoind = bitcoinrpc.connect_to_remote(bitcoind_login, bitcoind_password, host=bitcoind_host, port=bitcoind_port)
+
+	res={'error_аmount':None,
+		 'error_submitting_form':None,
+		 'error_аmount_zero':None,
+		 'error_fromaccount':None,
+		 'error_tobitcoinaddress':None,
+		 'success':None}
+
+	comment = request.POST.get('comment','')
+	if len(comment)==0:
+		comment=loc.translate(_("No comments"))
+
+	comment_to = request.POST.get('comment_to','')
+	if len(comment_to)==0:
+		comment_to=loc.translate(_("No comments"))
+
+	fromaccount=request.POST.get('fromaccount','')
+	if len(fromaccount)==0:
+		res['error_fromaccount']=loc.translate(_("Error in the sender wallet"))
+		return res 
+
+	if not_empty_str(request.POST.get('tobitcoinaddress',''))==False:
+		res['error_tobitcoinaddress']=loc.translate(_("Error in the field 'Bitcoin address to send to'"))
+		return res 
+	else:
+		tobitcoinaddress=request.POST.get('tobitcoinaddress','')
+
+	if not_empty_float(request.POST.get('send_amount', ''))==False:
+		res['error_аmount']= loc.translate(_("Error in the field 'Amount to send'"))
+		return res
+	else:
+		amount=Decimal(not_empty_float(request.POST.get('send_amount', '')))
+	if amount==0:
+		res['error_аmount_zero']=loc.translate(_("Error.You entered zero"))
+		return res
+
+	csrf = request.POST.get('csrf', '')
+	if csrf == request.get_csrf(): 
+		send_success=bitcoind.sendfrom(fromaccount,tobitcoinaddress,amount,comment=comment,comment_to=comment_to)
+		res['success']= loc.translate(_("Sending money has been successful"))
+		return res
+	else:
+		res['error_submitting_form']=loc.translate(_("Error submitting form"))
+		return res
+#----------------------------------
+@view_config(
+	route_name='bitcoin.cl.change_name',
+	permission='USAGE',
+	renderer='json'
+)
+def change_name_wallet(request):
+	loc = get_localizer(request)    
+	cfg = request.registry.settings
+	bitcoind_host = cfg.get('netprofile.client.bitcoind.host')
+	bitcoind_port = cfg.get('netprofile.client.bitcoind.port')
+	bitcoind_login = cfg.get('netprofile.client.bitcoind.login')
+	bitcoind_password = cfg.get('netprofile.client.bitcoind.password')
+	bitcoind = bitcoinrpc.connect_to_remote(bitcoind_login, bitcoind_password, host=bitcoind_host, port=bitcoind_port)
+	
+	res={'error_submitting_form':None,
+		 'old_account_error':None,
+		 'new_account_error':None,
+		 'success_change':None}
+
+	csrf = request.POST.get('csrf', '')
+	if csrf == request.get_csrf():  
+		old_account = request.POST.get('old_account', '')
+		new_account = string_wallet_name(request.POST.get('new_account', ''))
+
+		if len(old_account)==0:
+			res['old_account_error']=loc.translate(_("Error in the field 'Old wallet name'"))
+			return res 			
+		
+		if len(new_account)==0:
+			res['old_account_error']=loc.translate(_("Error in the field 'New wallet name'"))
+			return res 			
+
+		old_account_address=bitcoind.getaddressesbyaccount(old_account)[0]
+		change_name=bitcoind.setaccount(old_account_address,new_account)
+		res['success_change']=loc.translate(_("Change the wallet name has been successful")) 
+		return res
+	else:
+		res['error_submitting_form']=loc.translate(_('Error submitting form'))
+		return res
+#----------------------------------
+
+@view_config(
+	route_name='bitcoin.cl.listtrans',
+	permission='USAGE',
+	renderer='netprofile_bitcoin:templates/client_bitcoin_listtrans.mak'
+)
+def transaction_list(request):
+	loc = get_localizer(request)
+	sess = DBSession()
+	access_user = sess.query(AccessEntity).filter_by(nick=str(request.user)).first()  
+	cfg = request.registry.settings
+	bitcoind_host = cfg.get('netprofile.client.bitcoind.host')
+	bitcoind_port = cfg.get('netprofile.client.bitcoind.port')
+	bitcoind_login = cfg.get('netprofile.client.bitcoind.login')
+	bitcoind_password = cfg.get('netprofile.client.bitcoind.password')
+	bitcoin_link_id=cfg.get('netprofile.client.bitcoin.link_id', 1)	
+	bitcoind = bitcoinrpc.connect_to_remote(bitcoind_login, bitcoind_password, host=bitcoind_host, port=bitcoind_port)
+	
+	No_data=loc.translate(_("For this category of transactions, this information is not available"))
+
+	tpldef = {'transaction_account':None,
+			  'transaction_list':None,
+			  'error_number':None,
+			  'error_number_field':None,
+			  'empty_list_transaction':None,
+			  'error_number_and_empty_list_transaction':None} 
+
+	request.run_hook('access.cl.tpldef', tpldef, request)
+
+	userwallets = [{'wallet':"{0}".format(str(bitcoind.getaccount(link.value)))} for link in access_user.links if int(link.type_id)==int(bitcoin_link_id)]
+	tpldef['wallets']=userwallets
+	
+	csrf = request.POST.get('csrf', '')
+	account_of_wallet = request.POST.get('account_of_wallet', '')
+	tpldef['transaction_account']=account_of_wallet 
+	number=request.POST.get('number', '')   
+	if not_empty_int(number):
+		number = int(number)
+		if csrf == request.get_csrf():
+			transaction_list=bitcoind.listtransactions(account=account_of_wallet,count=number)   
+			list_param_transaction=list() 
+			list_param_transaction = [{'amount':transaction.amount,
+									   'category':transaction.category,
+									   'otheraccount':transaction.otheraccount.encode('latin1').decode('utf8'),    
+									   'address':getattr(transaction,'address',No_data),
+									   'confirmations':getattr(transaction,'confirmations',No_data),
+									   'txid':getattr(transaction,'txid',No_data),
+									   'message':getattr(transaction,'message',No_data),
+									   'to':getattr(transaction,'to',No_data) } for transaction in transaction_list ]
+ 
+			if len(list_param_transaction)>0: 
+				tpldef['transaction_list']=list_param_transaction
+
+			if len(list_param_transaction)==0 and number>0:
+				tpldef['empty_list_transaction']=True  
+
+			if len(list_param_transaction)==0 and number==0:    
+				tpldef['error_number_and_empty_list_transaction']=True
+				if bitcoind.listtransactions(account=account_of_wallet,count=1):                        
+					tpldef['error_number_and_empty_list_transaction']=None
+					tpldef['error_number']=True
+
+		return tpldef 
+
+	else:
+		tpldef['error_number_field']=True
+		return tpldef
+
+
+
+  

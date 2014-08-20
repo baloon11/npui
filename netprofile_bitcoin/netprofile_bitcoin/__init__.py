@@ -2,7 +2,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: t -*-
 #
 # NetProfile: Bitcoin module
-# © Copyright 2014 Alex 'Unik' Unigovsky
+# © Copyright 2013 Alex 'Unik' Unigovsky
 #
 # This file is part of NetProfile.
 # NetProfile is free software: you can redistribute it and/or
@@ -28,6 +28,7 @@ from __future__ import (
 )
 
 from netprofile.common.modules import ModuleBase
+from .models import *
 
 from pyramid.i18n import TranslationStringFactory
 
@@ -41,14 +42,46 @@ class Module(ModuleBase):
 			'/bitcoin',
 			vhost='client'
 		)
+
 		mmgr.cfg.add_route(
 			'bitcoin.cl.export',
 			'/bitcoin/export',
 			vhost='client'
 		)
+
 		mmgr.cfg.add_route(
-			'bitcoin.cl.create',
-			'/bitcoin/create',
+			'bitcoin.cl.move',
+			'/bitcoin/move',
+			vhost='client'
+		)
+
+		mmgr.cfg.add_route(
+			'bitcoin.cl.send',
+			'/bitcoin/send',
+			vhost='client'
+		)
+
+		mmgr.cfg.add_route(
+			'bitcoin.cl.change_name',
+			'/bitcoin/change_name',
+			vhost='client'
+		)
+
+		mmgr.cfg.add_route(
+			'bitcoin.cl.listtrans',
+			'/bitcoin/transaction_list',
+			vhost='client'
+		)
+
+		mmgr.cfg.add_route(
+			'bitcoin.cl.create_wallet',
+			'/bitcoin/create_wallet',
+			vhost='client'
+		)
+
+		mmgr.cfg.add_route(
+			'bitcoin.cl.create_wallet_from_import',
+			'/bitcoin/create_wallet_from_import',
 			vhost='client'
 		)
 
@@ -60,9 +93,7 @@ class Module(ModuleBase):
 	def get_deps(cls):
 		return ('entities',)
 
-	@classmethod
-	def get_models(cls):
-		from netprofile_bitcoin import models
+	def get_models(self):
 		return (
 		)
 
