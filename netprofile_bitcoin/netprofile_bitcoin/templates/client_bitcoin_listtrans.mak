@@ -328,7 +328,7 @@
                    min="0"         
                    tabindex="1"  
                    data-validation-required-message="${_('This field is required')}"     
-                   data-validation-min-message="${_('This field is too short')}"/>
+                   data-validation-min-message="${_('Error. Min number is 0.')}"/>
                         ${loc.translate(_("recent transactions"))}
                         <br />
 
