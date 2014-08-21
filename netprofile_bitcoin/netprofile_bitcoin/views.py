@@ -382,7 +382,7 @@ def transaction_list(request):
 
 	request.run_hook('access.cl.tpldef', tpldef, request)
 
-	userwallets = [{'wallet':"{0}".format(str(bitcoind.getaccount(link.value)))} for link in access_user.links if int(link.type_id)==int(bitcoin_link_id)]
+	userwallets = [{'wallet':bitcoind.getaccount(link.value).encode('latin1').decode('utf8')} for link in access_user.links if int(link.type_id)==int(bitcoin_link_id)]
 	tpldef['wallets']=userwallets
 	
 	csrf = request.POST.get('csrf', '')
