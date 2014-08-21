@@ -35,10 +35,8 @@ from pyramid.i18n import (
 #from here, there are several methods added
 #that are not in the original lib
 #https://github.com/nikitos/bitcoin-python
-import re
 import bitcoinrpc
 from decimal import Decimal
-import json
 
 from pyramid.view import view_config
 from pyramid.httpexceptions import (
@@ -312,7 +310,8 @@ def send_coints(request):
 	else:
 		res['error_submitting_form']=loc.translate(_("Error submitting form"))
 		return res
-#----------------------------------
+
+
 @view_config(
 	route_name='bitcoin.cl.change_name',
 	permission='USAGE',
@@ -352,7 +351,7 @@ def change_name_wallet(request):
 	else:
 		res['error_submitting_form']=loc.translate(_('Error submitting form'))
 		return res
-#----------------------------------
+
 
 @view_config(
 	route_name='bitcoin.cl.listtrans',
