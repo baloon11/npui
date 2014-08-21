@@ -2,48 +2,48 @@
 <%inherit file="netprofile_access:templates/client_layout.mak"/>
 <script type='text/javascript'>
 function createWallet(result_id, form_id, url) {
-    jQuery.ajax({
-        url:     url,
-        type:     "POST",
-        dataType: "JSON",
-        data: jQuery("#"+form_id).serialize(), 
-        beforeSend: function () {
-        document.getElementById(result_id).innerHTML = "${loc.translate(_("Creating new wallet..."))}";},
+        jQuery.ajax({
+              url:     url,
+              type:     "POST",
+              dataType: "JSON",
+              data: jQuery("#"+form_id).serialize(), 
+              beforeSend: function () {
+              document.getElementById(result_id).innerHTML = "${loc.translate(_("Creating new wallet..."))}";},
 
-        success: function(response) {                                     
-         if (response['error_submitting_form']) 
-          {document.getElementById(result_id).innerHTML =response['error_submitting_form'];
-           setTimeout(function() {location.reload();}, 3000);}
+              success: function(response) {                                     
+              if (response['error_submitting_form']) 
+                 {document.getElementById(result_id).innerHTML =response['error_submitting_form'];
+                  setTimeout(function() {location.reload();}, 3000);}
         
-         if (response['error_wallet_name_field']) 
-          {document.getElementById(result_id).innerHTML =response['error_wallet_name_field'];
-           setTimeout(function() {location.reload();}, 3000);}
+              if (response['error_wallet_name_field']) 
+                 {document.getElementById(result_id).innerHTML =response['error_wallet_name_field'];
+                  setTimeout(function() {location.reload();}, 3000);}
 
-         if (response['success_create']) 
-          {document.getElementById(result_id).innerHTML =response['success_create'];
-           location.reload();}               
-        },
-        error: function(response) { 
-           document.getElementById(result_id).innerHTML = "${loc.translate(_("Server connection error"))}";
-           setTimeout(function() {location.reload();}, 3000);}
-      });
-    }
+              if (response['success_create']) 
+                 {document.getElementById(result_id).innerHTML =response['success_create'];
+                  location.reload();}               
+              },
+              error: function(response) { 
+                     document.getElementById(result_id).innerHTML = "${loc.translate(_("Server connection error"))}";
+                     setTimeout(function() {location.reload();}, 3000);}
+            });
+      }
 </script>
 
 <script type='text/javascript'>
 function exportPrivKey(addrid, url, resultid) {
         jQuery.ajax({
-            url:     url,
-            type:     "GET",
-            dataType: "JSON",
-            data: ({addr: addrid}),
-            error: function (){
-                   alert("${loc.translate(_("Connection error"))}");
-                   setTimeout(function() {location.reload();}, 3000);},
-            success: function(response){
-                     document.getElementById(resultid).innerHTML = response['privkey'];}
-        });
-   }
+              url:     url,
+              type:     "GET",
+              dataType: "JSON",
+              data: ({addr: addrid}),
+              error: function (){
+                     alert("${loc.translate(_("Connection error"))}");
+                     setTimeout(function() {location.reload();}, 3000);},
+              success: function(response){
+                       document.getElementById(resultid).innerHTML = response['privkey'];}
+            });
+      }
 </script>
 
 <script type="text/javascript">
@@ -57,7 +57,7 @@ function importKey(result_id, form_id, url) {
               document.getElementById(result_id).innerHTML = "${loc.translate(_("Creating new wallet..."))}";},
 
               success: function(response) {                                     
-               if (response['error_submitting_form']) 
+              if (response['error_submitting_form']) 
                   {document.getElementById(result_id).innerHTML =response['error_submitting_form'];
                    setTimeout(function() {location.reload();}, 3000);}
 
@@ -65,11 +65,11 @@ function importKey(result_id, form_id, url) {
                  {document.getElementById(result_id).innerHTML =response['error_wallet_name_field'];
                   setTimeout(function() {location.reload();}, 3000);}
                 
-               if (response['error_import_key']) 
+              if (response['error_import_key']) 
                   {document.getElementById(result_id).innerHTML =response['error_import_key'];
                    setTimeout(function() {location.reload();}, 3000);}
 
-               if (response['success_create']) 
+              if (response['success_create']) 
                   {document.getElementById(result_id).innerHTML =response['success_create'];
                    location.reload();}               
               },
@@ -77,7 +77,7 @@ function importKey(result_id, form_id, url) {
                      document.getElementById(result_id).innerHTML = "${loc.translate(_("Server connection error"))}";
                      setTimeout(function() {location.reload();}, 3000);}
             });
-        }
+      }
 </script>
 
 <script type="text/javascript">
@@ -115,7 +115,7 @@ function moveCoints(result_id, form_id, url) {
                      document.getElementById(result_id).innerHTML = "${loc.translate(_("Server connection error"))}";
                      setTimeout(function() {location.reload();}, 3000);}
             });
-        }
+      }
 </script>
 
 <script type="text/javascript">
@@ -157,7 +157,7 @@ function sendCoints(result_id, form_id, url) {
                      document.getElementById(result_id).innerHTML = "${loc.translate(_("Server connection error"))}";
                      setTimeout(function() {location.reload();}, 3000);}
             });
-        }
+      }
 </script> 
 
 <script type="text/javascript">
@@ -191,19 +191,19 @@ function changeNameWallet(result_id, form_id, url) {
                      document.getElementById(result_id).innerHTML = "${loc.translate(_("Server connection error"))}";
                      setTimeout(function() {location.reload();}, 3000);}
             });
-        }
+      }
 </script>
 
 % if message:   
 <div class='bs-callout bs-callout-info'>
-  <h4>${loc.translate(_("Ready"))}</h4>       
-  <p>${loc.translate(_("Action successfully completed"))}</p>  
+    <h4>${loc.translate(_("Ready"))}</h4>       
+    <p>${loc.translate(_("Action successfully completed"))}</p>  
 </div>
 % endif
 
  <h1>${loc.translate(_("My Bitcoin Wallets"))}</h1>
-<div style="padding-top: 1em; padding-left: 1em;">
-     <h4>${loc.translate(_("Total Balance"))}:${total_balance} ${loc.translate(_("BTC"))}</h4>
+    <div style="padding-top: 1em; padding-left: 1em;">
+    <h4>${loc.translate(_("Total Balance"))}:${total_balance} ${loc.translate(_("BTC"))}</h4>
 </div> 
 
 <div class="btn-group pull-right">    
