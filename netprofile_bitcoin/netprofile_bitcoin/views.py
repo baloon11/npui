@@ -187,7 +187,8 @@ def bitcoin_walletss(request):
 
 	userwallets = []    
 	userwallets = [{'wallet':bitcoind.getaccount(link.value).encode('latin1').decode('utf8'), 
-					'balance':"{0}".format(str(bitcoind.getbalance(bitcoind.getaccount(link.value).encode('latin1').decode('utf8') ))),
+					#'balance':bitcoind.getreceivedbyaccount(bitcoind.getaccount(link.value).encode('latin1').decode('utf8')),
+					'balance':bitcoind.getreceivedbyaddress(link.value),
 					'address':link.value} for link in access_user.links if int(link.type_id)==int(bitcoin_link_id)]
 	tpldef.update({'wallets':userwallets})
 
@@ -399,8 +400,8 @@ def transaction_list(request):
 									   'address':getattr(transaction,'address',No_data),
 									   'confirmations':getattr(transaction,'confirmations',No_data),
 									   'txid':getattr(transaction,'txid',No_data),
-									   'comment':getattr(transaction,'comment',No_data),
-									   'to':getattr(transaction,'to',No_data) } for transaction in transaction_list ]
+									   'comment':getattr(transaction,'comment',No_data).encode('latin1').decode('utf8'),
+									   'to':getattr(transaction,'to',No_data).encode('latin1').decode('utf8') } for transaction in transaction_list ]
  
 			if len(list_param_transaction)>0: 
 				tpldef['transaction_list']=list_param_transaction
