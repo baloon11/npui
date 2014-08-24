@@ -395,12 +395,11 @@ def transaction_list(request):
 			list_param_transaction=list() 
 			list_param_transaction = [{'amount':transaction.amount,
 									   'category':transaction.category,
-									   #'otheraccount':transaction.otheraccount.encode('latin1').decode('utf8'),
-									   'otheraccount':getattr(transaction,'otheraccount',No_data).encode('latin1').decode('utf8'), #transaction.otheraccount.encode('latin1').decode('utf8'),    
+									   'otheraccount':getattr(transaction,'otheraccount',No_data).encode('latin1').decode('utf8'),    
 									   'address':getattr(transaction,'address',No_data),
 									   'confirmations':getattr(transaction,'confirmations',No_data),
 									   'txid':getattr(transaction,'txid',No_data),
-									   'message':getattr(transaction,'message',No_data),
+									   'comment':getattr(transaction,'comment',No_data),
 									   'to':getattr(transaction,'to',No_data) } for transaction in transaction_list ]
  
 			if len(list_param_transaction)>0: 

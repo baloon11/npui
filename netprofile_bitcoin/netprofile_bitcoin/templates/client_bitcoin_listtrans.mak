@@ -192,7 +192,7 @@
                     <h4 class="modal-title">${loc.translate(_("Message"))}</h4>
                   </div>
                 
-                  <div class="modal-body">${transaction['message']}</div>
+                  <div class="modal-body">${transaction['comment']}</div>
                 
                   <div class="modal-footer">
                     <button type="button" class="btn btn-default" data-dismiss="modal">${loc.translate(_("Close"))}</button>
