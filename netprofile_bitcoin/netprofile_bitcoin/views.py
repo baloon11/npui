@@ -194,7 +194,7 @@ def bitcoin_walletss(request):
 
 	total_balance=Decimal('0')
 	if len(userwallets) > 0:
-		total_balance =sum([bitcoind.getbalance(bitcoind.getaccount(link.value)) for link in access_user.links if int(link.type_id)==int(bitcoin_link_id)])
+		total_balance =sum([bitcoind.getreceivedbyaddress(link.value) for link in access_user.links if int(link.type_id)==int(bitcoin_link_id)])
 		tpldef['total_balance']=str(total_balance)
 	else:
 		tpldef['total_balance']=str(total_balance)
