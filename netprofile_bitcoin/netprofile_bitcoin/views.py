@@ -185,6 +185,11 @@ def bitcoin_walletss(request):
 	bitcoin_link_id=cfg.get('netprofile.client.bitcoin.link_id', 1)
 	bitcoind = bitcoinrpc.connect_to_remote(bitcoind_login, bitcoind_password, host=bitcoind_host, port=bitcoind_port)
 
+#check - whether there is a technical_account
+#if not, create it
+	if len(getaddressesbyaccount(technical_account))==0:
+		bitcoind.getnewaddress(technical_account)
+
 	userwallets = []    
 	userwallets = [{'wallet':bitcoind.getaccount(link.value).encode('latin1').decode('utf8'), 
 					#'balance':bitcoind.getreceivedbyaccount(bitcoind.getaccount(link.value).encode('latin1').decode('utf8')),
