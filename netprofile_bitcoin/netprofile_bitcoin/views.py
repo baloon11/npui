@@ -187,19 +187,23 @@ def bitcoin_walletss(request):
 
 #check - whether there is a technical_account
 #if not, create it
-	if len(getaddressesbyaccount(technical_account))==0:
+	technical_account='technical_account'
+	if len(bitcoind.getaddressesbyaccount(technical_account))==0:
 		bitcoind.getnewaddress(technical_account)
 
 	userwallets = []    
 	userwallets = [{'wallet':bitcoind.getaccount(link.value).encode('latin1').decode('utf8'), 
-					#'balance':bitcoind.getreceivedbyaccount(bitcoind.getaccount(link.value).encode('latin1').decode('utf8')),
-					'balance':bitcoind.getreceivedbyaddress(link.value),
+					'balance':"{0}".format(str(bitcoind.getbalance(bitcoind.getaccount(link.value).encode('latin1').decode('utf8') ))),
+					#'balance':bitcoind.getbalance( bitcoind.getaccount(link.value) ),
+
 					'address':link.value} for link in access_user.links if int(link.type_id)==int(bitcoin_link_id)]
 	tpldef.update({'wallets':userwallets})
 
 	total_balance=Decimal('0')
 	if len(userwallets) > 0:
-		total_balance =sum([bitcoind.getreceivedbyaddress(link.value) for link in access_user.links if int(link.type_id)==int(bitcoin_link_id)])
+#		total_balance =sum([bitcoind.getreceivedbyaddress(link.value) for link in access_user.links if int(link.type_id)==int(bitcoin_link_id)])
+		total_balance =sum([bitcoind.getbalance( bitcoind.getaccount(link.value).encode('latin1').decode('utf8') ) for link in access_user.links if int(link.type_id)==int(bitcoin_link_id)])
+		
 		tpldef['total_balance']=str(total_balance)
 	else:
 		tpldef['total_balance']=str(total_balance)
@@ -324,12 +328,15 @@ def send_coints(request):
 	renderer='json'
 )
 def change_name_wallet(request):
-	loc = get_localizer(request)    
+	loc = get_localizer(request) 
+	sess = DBSession()
+	access_user = sess.query(AccessEntity).filter_by(nick=str(request.user)).first()	
 	cfg = request.registry.settings
 	bitcoind_host = cfg.get('netprofile.client.bitcoind.host')
 	bitcoind_port = cfg.get('netprofile.client.bitcoind.port')
 	bitcoind_login = cfg.get('netprofile.client.bitcoind.login')
 	bitcoind_password = cfg.get('netprofile.client.bitcoind.password')
+	bitcoin_link_id=cfg.get('netprofile.client.bitcoin.link_id', 1)	
 	bitcoind = bitcoinrpc.connect_to_remote(bitcoind_login, bitcoind_password, host=bitcoind_host, port=bitcoind_port)
 	
 	res={'error_submitting_form':None,
@@ -341,6 +348,7 @@ def change_name_wallet(request):
 	if csrf == request.get_csrf():  
 		old_account = request.POST.get('old_account', '')
 		new_account = string_wallet_name(request.POST.get('new_account', ''))
+		old_account_balance=bitcoind.getbalance(old_account)
 
 		if len(old_account)==0:
 			res['old_account_error']=loc.translate(_("Error in the field 'Old wallet name'"))
@@ -349,11 +357,63 @@ def change_name_wallet(request):
 		if len(new_account)==0:
 			res['old_account_error']=loc.translate(_("Error in the field 'New wallet name'"))
 			return res 			
+#------------------------------------------
+#		technical_account='technical_account'
+#		#new_account=bitcoind.getnewaddress(new_account)# пункт 1  тут ошибка этот метод возвращает адрес
+#		new_account_address=bitcoind.getnewaddress(new_account)
+		#new_account_address=bitcoind.getaccountaddress(new_account)# пункт 2 
+#		old_account_address=bitcoind.getaccountaddress(old_account)# пункт 3
+		
+#		old_account_balance=bitcoind.getbalance(old_account)# пункт 6
+#		bitcoind.move(old_account,new_account,old_account_balance)# пункт 7
 
-		old_account_address=bitcoind.getaddressesbyaccount(old_account)[0]
-		change_name=bitcoind.setaccount(old_account_address,new_account)
-		res['success_change']=loc.translate(_("Change the wallet name has been successful")) 
-		return res
+#		bitcoind.setaccount(old_account_address,new_account)# пункт 4
+#		bitcoind.setaccount(new_account_address,technical_account)# пункт 5
+
+		
+#	res['success_change']=loc.translate(_("Change the wallet name has been successful")) 
+#		return res
+#------------------------------------------
+#берем аккунт, который переименовываем -- old_account
+
+# к нему в БД привязан 1 адрес, но у аккаунта  может быть 2 адреса (из-за особенностей работы setaccount)
+
+# (setaccount создает  аккаунт с одним адресом  и  добавляет тот, кот мы примылаем, в результате  на аккаунте 2 адреса
+# перекидыванием адресов на другие аккаунты ничего не решается --всегда остается 2 -просто каждый раз при перекидывании
+# создается еще один адрес)
+
+# находим список всех адресов этого аккаунта, getaddressesbyaccount(old_account)-выдаст список
+# находим список всех адресов в БД -сравниваем - находим,  какой элемент списка (адрес) есть в БД и самом списке. 
+# это тот адрес(old_account_address), кот. нам нужен (другой-это левый адрес,он нигде не используется)
+# так по-хитрому ищем, так как каждый раз нужный нам адрес появляется в списке под другим индексом И отследить сложно.  
+
+#change_name=bitcoind.setaccount(old_account_address,new_account) делаем новый аккаунт и добавляем ему наш аккаунт
+# переводим деньги из старого аккаунта на новый 
+#bitcoind.move(old_account,new_account,old_account_balance)
+# тк в БД адреса записываются только при создании, то левые кошельки туда не попадут 
+
+# баланс выводится через аккаунт
+#'balance':"{0}".format(str(bitcoind.getbalance(bitcoind.getaccount(link.value).encode('latin1').decode('utf8') ))),
+
+# общий баланс считается как сумма денег из всех акаунтов, которые связаны с адресами из БД 
+#------------------------------------------
+
+#		old_account_address=bitcoind.getaddressesbyaccount(old_account)[0]
+#		change_name=bitcoind.setaccount(old_account_address,new_account)
+#		res['success_change']=loc.translate(_("Change the wallet name has been successful")) 
+#		return res
+
+		list_old_account_address=bitcoind.getaddressesbyaccount(old_account)
+		list_addresses_db=[link.value for link in access_user.links if int(link.type_id)==int(bitcoin_link_id)] 
+		
+		for addr_old_account in list_old_account_address:
+			for addr_db in list_addresses_db:
+				if str(addr_old_account)==str(addr_db): # этот адрес нам и нужен     			
+					bitcoind.setaccount(addr_db,new_account)
+					bitcoind.move(old_account,new_account,old_account_balance)
+					res['success_change']=loc.translate(_("Change the wallet name has been successful"))
+					return res
+
 	else:
 		res['error_submitting_form']=loc.translate(_('Error submitting form'))
 		return res
