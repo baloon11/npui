@@ -190,6 +190,10 @@ function changeNameWallet(result_id, form_id, url) {
               if(response['new_account_error'])
                 {document.getElementById(result_id).innerHTML =response['new_account_error'];
                  setTimeout(function() {location.reload();}, 3000);}
+
+              if(response['error_not_unique_name'])
+                {document.getElementById(result_id).innerHTML =response['error_not_unique_name'];
+                 setTimeout(function() {location.reload();}, 3000);}
               
               if(response['success_change'])
                 {document.getElementById(result_id).innerHTML =response['success_change'];             
