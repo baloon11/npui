@@ -108,7 +108,7 @@ def create_wallet(request):
 
 			for wallet in wallets:     
 				if newwallet_create == wallet:
-					resp['error_not_unique_name']=loc.translate(_("Error. Wallet with the same name already exists.")) # перевод
+					resp['error_not_unique_name']=loc.translate(_("Error. Wallet with the same name already exists."))
 					return resp
 		
 			new_wallet=bitcoind.getnewaddress(newwallet_create)
@@ -168,7 +168,7 @@ def create_wallet_from_import(request):
 
 		for wallet in wallets:     
 			if newwallet_create_from_import == wallet:
-				resp['error_not_unique_name']=loc.translate(_("Error. Wallet with the same name already exists.")) # перевод
+				resp['error_not_unique_name']=loc.translate(_("Error. Wallet with the same name already exists."))
 				return resp
 
 		create_from_import = bitcoind.importprivkey(privkey,newwallet_create_from_import)
@@ -377,7 +377,7 @@ def change_name_wallet(request):
 
 		for wallet in wallets:     
 			if  new_account == wallet:
-				res['error_not_unique_name']=loc.translate(_("Error. Wallet with the same name already exists.")) # перевод
+				res['error_not_unique_name']=loc.translate(_("Error. Wallet with the same name already exists."))
 				return res
 
 		list_old_account_address=bitcoind.getaddressesbyaccount(old_account)
