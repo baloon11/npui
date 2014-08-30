@@ -92,15 +92,25 @@ def create_wallet(request):
 	bitcoin_link_id=cfg.get('netprofile.client.bitcoin.link_id', 1)
 	bitcoind = bitcoinrpc.connect_to_remote(bitcoind_login, bitcoind_password, host=bitcoind_host, port=bitcoind_port)
 
+	wallets = [bitcoind.getaccount(link.value).encode('latin1').decode('utf8')
+			   for link in access_user.links if int(link.type_id)==int(bitcoin_link_id)]
+
 	resp = {'success_create':None,
 			'error_submitting_form':None,                   
-			'error_wallet_name_field':None} 
+			'error_wallet_name_field':None,
+			'error_not_unique_name':None} 
 
 	csrf = request.POST.get('csrf', '')
 	if csrf == request.get_csrf():
 		newwallet_create = string_wallet_name(request.POST.get("newwallet_create",''))
 
 		if newwallet_create:
+
+			for wallet in wallets:     
+				if str(newwallet_create)==str(wallet):
+					resp['error_not_unique_name']=loc.translate(_("Error. Wallet with the same name already exists.")) # перевод
+					return resp
+		
 			new_wallet=bitcoind.getnewaddress(newwallet_create)
 			link = AccessEntityLink()
 			link.value=new_wallet
