@@ -107,7 +107,7 @@ def create_wallet(request):
 		if newwallet_create:
 
 			for wallet in wallets:     
-				if str(newwallet_create)==str(wallet):
+				if newwallet_create == wallet:
 					resp['error_not_unique_name']=loc.translate(_("Error. Wallet with the same name already exists.")) # перевод
 					return resp
 		
@@ -144,10 +144,14 @@ def create_wallet_from_import(request):
 	bitcoin_link_id=cfg.get('netprofile.client.bitcoin.link_id', 1)
 	bitcoind = bitcoinrpc.connect_to_remote(bitcoind_login, bitcoind_password, host=bitcoind_host, port=bitcoind_port)
 
+	wallets = [bitcoind.getaccount(link.value).encode('latin1').decode('utf8')
+			   for link in access_user.links if int(link.type_id)==int(bitcoin_link_id)]
+
 	resp = {'success_create': None,
 			'error_submitting_form':None,
 			'error_import_key':None,
-			'error_wallet_name_field':None}	
+			'error_wallet_name_field':None,
+			'error_not_unique_name':None}	
 
 	csrf = request.POST.get('csrf', '')   
 	if csrf == request.get_csrf():
@@ -160,7 +164,12 @@ def create_wallet_from_import(request):
 
 		if len(newwallet_create_from_import)==0:
 			resp['error_wallet_name_field']=loc.translate(_("Error in the field 'Wallet name'"))
-			return resp 			
+			return resp 
+
+		for wallet in wallets:     
+			if newwallet_create_from_import == wallet:
+				resp['error_not_unique_name']=loc.translate(_("Error. Wallet with the same name already exists.")) # перевод
+				return resp
 
 		create_from_import = bitcoind.importprivkey(privkey,newwallet_create_from_import)
 		link = AccessEntityLink()

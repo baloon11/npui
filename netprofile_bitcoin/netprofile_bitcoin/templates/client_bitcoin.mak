@@ -73,6 +73,10 @@ function importKey(result_id, form_id, url) {
                   {document.getElementById(result_id).innerHTML =response['error_import_key'];
                    setTimeout(function() {location.reload();}, 3000);}
 
+              if (response['error_not_unique_name']) 
+                  {document.getElementById(result_id).innerHTML =response['error_not_unique_name'];
+                   setTimeout(function() {location.reload();}, 3000);}
+
               if (response['success_create']) 
                   {document.getElementById(result_id).innerHTML =response['success_create'];
                    location.reload();}               
