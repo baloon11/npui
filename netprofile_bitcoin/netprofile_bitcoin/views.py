@@ -283,18 +283,24 @@ def move_coints(request):
 )    
 def send_coints(request):
 	loc = get_localizer(request)
+	sess = DBSession()
+	access_user = sess.query(AccessEntity).filter_by(nick=str(request.user)).first()	
 	cfg = request.registry.settings
 	bitcoind_host = cfg.get('netprofile.client.bitcoind.host')
 	bitcoind_port = cfg.get('netprofile.client.bitcoind.port')
 	bitcoind_login = cfg.get('netprofile.client.bitcoind.login')
 	bitcoind_password = cfg.get('netprofile.client.bitcoind.password')
+	bitcoin_link_id=cfg.get('netprofile.client.bitcoin.link_id', 1)	
 	bitcoind = bitcoinrpc.connect_to_remote(bitcoind_login, bitcoind_password, host=bitcoind_host, port=bitcoind_port)
+
+	addresses = [link.value for link in access_user.links if int(link.type_id)==int(bitcoin_link_id)]
 
 	res={'error_аmount':None,
 		 'error_submitting_form':None,
 		 'error_аmount_zero':None,
 		 'error_fromaccount':None,
 		 'error_tobitcoinaddress':None,
+		 'error_use_other_option':None,
 		 'success':None}
 
 	comment = request.POST.get('comment','')
@@ -315,6 +321,11 @@ def send_coints(request):
 		return res 
 	else:
 		tobitcoinaddress=request.POST.get('tobitcoinaddress','')
+
+	for address in addresses:     
+		if tobitcoinaddress == address:
+			res['error_use_other_option']='error_use_other_option'
+			return res
 
 	if not_empty_float(request.POST.get('send_amount', ''))==False:
 		res['error_аmount']= loc.translate(_("Error in the field 'Amount to send'"))

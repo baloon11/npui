@@ -153,6 +153,10 @@ function sendCoints(result_id, form_id, url) {
                 {document.getElementById(result_id).innerHTML =response['error_tobitcoinaddress'];
                  setTimeout(function() {location.reload();}, 3000);}
 
+              if(response['error_use_other_option'])
+                {document.getElementById(result_id).innerHTML ="${loc.translate(_("This address belongs to one of your wallets."))}<br />${loc.translate(_("Use the option 'Transfer money between my wallets'."))}";
+                 setTimeout(function() {location.reload();}, 4000);}
+
               if(response['error_submitting_form'])
                 {document.getElementById(result_id).innerHTML =response['error_submitting_form'];
                  setTimeout(function() {location.reload();}, 3000);}
