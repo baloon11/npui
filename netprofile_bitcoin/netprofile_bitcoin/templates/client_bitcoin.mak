@@ -447,12 +447,8 @@ function changeNameWallet(result_id, form_id, url) {
                 ## тут POST
                 <form id="moveForm" class="form-inline" role="form" action="" method='POST'>
                     <div class="form-group">
-                        <div class="row">
-                            
-                            <div class="col-sm-3"></div>
-                            
-                            <div class="col-sm-4">
-                                <div align='left'>
+                        
+                        <div align="center">    
                                     ${loc.translate(_("From (wallet name)"))}:
                                     <br />
                                     <select size="1" name="fromaccount">
@@ -460,11 +456,9 @@ function changeNameWallet(result_id, form_id, url) {
                                             <option value="${wallet['wallet']}">${wallet['wallet']}</option>
                                         %endfor
                                     </select>
-                                </div>
-                            </div>
+                              <br />
+                              <br />
 
-                            <div class="col-sm-4">
-                                <div align='left'>
                                     ${loc.translate(_("To (wallet name)"))}:
                                     <br />
                                     <select size="1" name="toaccount">
@@ -472,11 +466,9 @@ function changeNameWallet(result_id, form_id, url) {
                                             <option value="${wallet['wallet']}">${wallet['wallet']}</option>
                                         %endfor
                                     </select>
-                                </div>
-                            </div>
-
                         </div>
                         <br />
+                        
                 ${loc.translate(_("Аmount of transfer"))}:
                 <input class="form-control"               
                    type="number"                          
