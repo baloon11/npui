@@ -426,6 +426,13 @@ def transaction_list(request):
 	
 	No_data=loc.translate(_("For this category of transactions, this information is not available"))
 
+	def comment_in_move(transaction,No_data):
+		if transaction.category =='move':
+			return No_data
+		else:
+			return getattr(transaction,'comment',No_data).encode('latin1').decode('utf8')
+
+
 	tpldef = {'transaction_account':None,
 			  'transaction_list':None,
 			  'error_number':None,
@@ -453,7 +460,7 @@ def transaction_list(request):
 									   'address':getattr(transaction,'address',No_data),
 									   'confirmations':getattr(transaction,'confirmations',No_data),
 									   'txid':getattr(transaction,'txid',No_data),
-									   'comment':getattr(transaction,'comment',No_data).encode('latin1').decode('utf8'),
+									   'comment':comment_in_move(transaction,No_data),
 									   'to':getattr(transaction,'to',No_data).encode('latin1').decode('utf8') } for transaction in transaction_list ]
  
 			if len(list_param_transaction)>0: 
