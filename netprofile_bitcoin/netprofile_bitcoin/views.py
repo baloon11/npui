@@ -173,7 +173,7 @@ def create_wallet_from_import(request):
 
 		create_from_import = bitcoind.importprivkey(privkey,newwallet_create_from_import)
 		link = AccessEntityLink()
-		link.value=bitcoind.getaddressesbyaccount(newwallet_create_from_import)[0]
+		link.value=bitcoind.getaccountaddress(newwallet_create_from_import)#getaddressesbyaccount(newwallet_create_from_import)[0]
 		link.entity=access_user		 
 		link.type_id = int(bitcoin_link_id)
 
@@ -207,15 +207,13 @@ def bitcoin_walletss(request):
 	userwallets = []    
 	userwallets = [{'wallet':bitcoind.getaccount(link.value).encode('latin1').decode('utf8'), 
 					'balance':"{0}".format(str(bitcoind.getbalance(bitcoind.getaccount(link.value).encode('latin1').decode('utf8') ))),
-					#'balance':bitcoind.getbalance( bitcoind.getaccount(link.value) ),
-
 					'address':link.value} for link in access_user.links if int(link.type_id)==int(bitcoin_link_id)]
 	tpldef.update({'wallets':userwallets})
 
 	total_balance=Decimal('0')
 	if len(userwallets) > 0:
-#		total_balance =sum([bitcoind.getreceivedbyaddress(link.value) for link in access_user.links if int(link.type_id)==int(bitcoin_link_id)])
-		total_balance =sum([bitcoind.getbalance( bitcoind.getaccount(link.value).encode('latin1').decode('utf8') ) for link in access_user.links if int(link.type_id)==int(bitcoin_link_id)])
+		total_balance =sum([bitcoind.getbalance( bitcoind.getaccount(link.value).encode('latin1').decode('utf8') )
+							for link in access_user.links if int(link.type_id)==int(bitcoin_link_id)])
 		
 		tpldef['total_balance']=str(total_balance)
 	else:
@@ -398,7 +396,10 @@ def change_name_wallet(request):
 			for addr_db in list_addresses_db:
 				if str(addr_old_account)==str(addr_db):     			
 					bitcoind.setaccount(addr_db,new_account)
-					bitcoind.move(old_account,new_account,old_account_balance)
+					
+					if old_account_balance>Decimal('0'):
+						bitcoind.move(old_account,new_account,old_account_balance)
+					
 					res['success_change']=loc.translate(_("Change the wallet name has been successful"))
 					return res
 
@@ -480,7 +481,3 @@ def transaction_list(request):
 	else:
 		tpldef['error_number_field']=True
 		return tpldef
-
-
-
-  
