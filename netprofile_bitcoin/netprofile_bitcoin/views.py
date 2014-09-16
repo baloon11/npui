@@ -173,7 +173,7 @@ def create_wallet_from_import(request):
 
 		create_from_import = bitcoind.importprivkey(privkey,newwallet_create_from_import)
 		link = AccessEntityLink()
-		link.value=bitcoind.getaccountaddress(newwallet_create_from_import)#getaddressesbyaccount(newwallet_create_from_import)[0]
+		link.value=bitcoind.getaccountaddress(newwallet_create_from_import)
 		link.entity=access_user		 
 		link.type_id = int(bitcoin_link_id)
 
