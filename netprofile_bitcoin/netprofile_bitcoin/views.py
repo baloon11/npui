@@ -141,7 +141,7 @@ def create_wallet_from_import(request):
 	bitcoind_port = cfg.get('netprofile.client.bitcoind.port')
 	bitcoind_login = cfg.get('netprofile.client.bitcoind.login')
 	bitcoind_password = cfg.get('netprofile.client.bitcoind.password')
-	bitcoin_link_id=cfg.get('netprofile.client.bitcoin.link_id', 1)
+	bitcoin_link_id=cfg.get('netprofile.client.bitcoin.link_id', 1)	
 	bitcoind = bitcoinrpc.connect_to_remote(bitcoind_login, bitcoind_password, host=bitcoind_host, port=bitcoind_port)
 
 	wallets = [bitcoind.getaccount(link.value).encode('latin1').decode('utf8')
@@ -202,6 +202,7 @@ def bitcoin_walletss(request):
 	bitcoind_login = cfg.get('netprofile.client.bitcoind.login')
 	bitcoind_password = cfg.get('netprofile.client.bitcoind.password')
 	bitcoin_link_id=cfg.get('netprofile.client.bitcoin.link_id', 1)
+	bitcoin_importkey=cfg.get('netprofile.client.bitcoin.importkey')
 	bitcoind = bitcoinrpc.connect_to_remote(bitcoind_login, bitcoind_password, host=bitcoind_host, port=bitcoind_port)
 
 	userwallets = []    
@@ -219,6 +220,11 @@ def bitcoin_walletss(request):
 	else:
 		tpldef['total_balance']=str(total_balance)
 
+	if bitcoin_importkey=='true':
+		tpldef['bitcoin_importkey']='true'
+	else:
+		tpldef['bitcoin_importkey']='false'
+		
 	return tpldef
 
 

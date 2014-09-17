@@ -231,11 +231,13 @@ function changeNameWallet(result_id, form_id, url) {
     </button>
 
     <ul class="dropdown-menu" role="menu">
+        % if bitcoin_importkey=='true':
         <li>
             <a data-toggle='modal' href='#modalImport' class="pull-left"          
                title="${loc.translate(_("Import Private Key"))}">${loc.translate(_("Import Private Key"))}</a>
         </li>
-        
+        % endif
+
         % if len(wallets) > 0:
         <li>
             <a data-toggle='modal' href='#modalListTransactions' class="pull-left"           
