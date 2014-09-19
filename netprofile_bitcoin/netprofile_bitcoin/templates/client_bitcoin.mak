@@ -145,6 +145,10 @@ function sendCoints(result_id, form_id, url) {
                 {document.getElementById(result_id).innerHTML =response['error_аmount_zero'];
                  setTimeout(function() {location.reload();}, 3000);}
 
+              if(response['error_amount_too_small'])
+                {document.getElementById(result_id).innerHTML =response['error_amount_too_small'];
+                 setTimeout(function() {location.reload();}, 3000);}
+
               if(response['error_fromaccount'])
                 {document.getElementById(result_id).innerHTML =response['error_fromaccount'];
                  setTimeout(function() {location.reload();}, 3000);}

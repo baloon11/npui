@@ -265,7 +265,7 @@ def move_coints(request):
 	else:
 		amount=Decimal(not_empty_float(request.POST.get('аmount', '')))
 	if amount==0:
-		res['error_аmount_zero']=loc.translate(_("Error.You entered zero"))
+		res['error_аmount_zero']=loc.translate(_("Error. You entered zero."))
 		return res
 	if csrf == request.get_csrf(): 
 		if fromaccount and toaccount :
@@ -302,6 +302,7 @@ def send_coints(request):
 	res={'error_аmount':None,
 		 'error_submitting_form':None,
 		 'error_аmount_zero':None,
+		 'error_amount_too_small':None,
 		 'error_fromaccount':None,
 		 'error_tobitcoinaddress':None,
 		 'error_use_other_option':None,
@@ -337,7 +338,10 @@ def send_coints(request):
 	else:
 		amount=Decimal(not_empty_float(request.POST.get('send_amount', '')))
 	if amount==0:
-		res['error_аmount_zero']=loc.translate(_("Error.You entered zero"))
+		res['error_аmount_zero']=loc.translate(_("Error. You entered zero."))
+		return res
+	if amount<Decimal('0.0001'):
+		res['error_amount_too_small']=loc.translate(_("Error. Amount is less than the typical transaction fee (0.0001 BTC)."))
 		return res
 
 	csrf = request.POST.get('csrf', '')
