@@ -592,16 +592,38 @@ function changeNameWallet(result_id, form_id, url) {
 % for w in wallets:
     <tr>
         <td align="center" style="vertical-align:middle">${w['wallet']}</td>
-        <td align="center" style="vertical-align:middle">${w['balance']} ${loc.translate(_("BTC"))}</td>         
-        <td align="center" style="vertical-align:middle">${w['address']}</td>
+        <td align="center" style="vertical-align:middle">${w['balance']} ${loc.translate(_("BTC"))}</td>  
+        
+        <td align="center" style="vertical-align:middle">
+        % for address in w['addresses']:
+          %if len(w['addresses'])>1 and (loop.index)==0:
+            <div style="margin-bottom:-0.6em;">${address}</div>          
+          %else:
+            ${address}            
+          % endif
+          <br />   
+        %endfor
+        </td>
 
         <td align="center" style="vertical-align:middle">
-            <a data-toggle='modal' href='#modalExport${w['address']}' title="${loc.translate(_("Private Key"))}"     
-               onClick="exportPrivKey('${w['address']}','${request.route_url("bitcoin.cl.export")}', 'resp${w['address']}');">
+        % for address in w['addresses']:
+
+          %if len(w['addresses'])>1 and (loop.index)==0:
+            <div style="margin-bottom:-0.6em;">                   
+            <a data-toggle='modal' href='#modalExport${address}' title="${loc.translate(_("Private Key"))}"     
+               onClick="exportPrivKey('${address}','${request.route_url("bitcoin.cl.export")}', 'resp${address}');">
                ${loc.translate(_("Private Key"))}
             </a>
-
-            <div class="modal fade" id="modalExport${w['address']}" tabindex="-1" role="dialog" aria-labelledby="modalExportLabel${w['address']}" aria-hidden="true">
+            </div>
+          %else:
+            <a data-toggle='modal' href='#modalExport${address}' title="${loc.translate(_("Private Key"))}"     
+               onClick="exportPrivKey('${address}','${request.route_url("bitcoin.cl.export")}', 'resp${address}');">
+               ${loc.translate(_("Private Key"))}
+            </a>
+          % endif
+          <br /> 
+          
+            <div class="modal fade" id="modalExport${address}" tabindex="-1" role="dialog" aria-labelledby="modalExportLabel${address}" aria-hidden="true">
             
                 <div class="modal-dialog" align="center">
                     <div class="modal-content">
@@ -611,7 +633,7 @@ function changeNameWallet(result_id, form_id, url) {
                             <h4 class="modal-title">${loc.translate(_("Private Key Export"))}</h4>
                         </div>
 
-                        <div class="modal-body" id="resp${w['address']}">${loc.translate(_("Wait please..."))}</div>
+                        <div class="modal-body" id="resp${address}">${loc.translate(_("Wait please..."))}</div>
 
                         <div class="modal-footer">
                             <button type="button" class="btn btn-default" data-dismiss="modal">${loc.translate(_("Close"))}</button>
@@ -620,15 +642,18 @@ function changeNameWallet(result_id, form_id, url) {
                     </div>
                 </div>
 
-            </div>
+            </div>        
+        %endfor
         </td>
 
+       
+
         <td align="center" style="vertical-align:middle">
-            <a data-toggle='modal'  href="#modalSend${w['address']}" title="${loc.translate(_("Send"))}"      
+            <a data-toggle='modal'  href="#modalSend${w['address_from_db']}" title="${loc.translate(_("Send"))}"      
                class="btn btn-link" >${loc.translate(_("Send"))}
             </a>
 
-            <div class="modal fade" id="modalSend${w['address']}" tabindex="-1" role="dialog" aria-labelledby="modalSendLabel${w['address']}" aria-hidden="true">
+            <div class="modal fade" id="modalSend${w['address_from_db']}" tabindex="-1" role="dialog" aria-labelledby="modalSendLabel${w['address_from_db']}" aria-hidden="true">
                 <div class="modal-dialog" align="center">
                     <div class="modal-content">
 
@@ -637,9 +662,9 @@ function changeNameWallet(result_id, form_id, url) {
                             <h4 class="modal-title">${loc.translate(_("Send money"))}</h4>
                         </div>
 
-                        <div class="modal-body" id="sendDiv${w['address']}">
+                        <div class="modal-body" id="sendDiv${w['address_from_db']}">
                             ## тут POST
-                            <form id="sendForm${w['address']}" class="form-inline" role="form" action="" method='POST'>
+                            <form id="sendForm${w['address_from_db']}" class="form-inline" role="form" action="" method='POST'>
                                 <div class="form-group">
                         
                                     <div align="right">
@@ -693,7 +718,7 @@ function changeNameWallet(result_id, form_id, url) {
                                     <br />
 
                         <button type="submit" class="btn btn-default" title="${loc.translate(_("Send money"))}" 
-                                onclick="sendCoints('sendDiv${w["address"]}', 'sendForm${w["address"]}', '${request.route_url("bitcoin.cl.send")}')">
+                                onclick="sendCoints('sendDiv${w['address_from_db']}', 'sendForm${w['address_from_db']}', '${request.route_url("bitcoin.cl.send")}')">
                                 ${loc.translate(_("Send money"))}
                         </button>
                         

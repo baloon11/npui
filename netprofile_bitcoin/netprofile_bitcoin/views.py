@@ -204,11 +204,20 @@ def bitcoin_walletss(request):
 	bitcoin_link_id=cfg.get('netprofile.client.bitcoin.link_id', 1)
 	bitcoin_importkey=cfg.get('netprofile.client.bitcoin.importkey')
 	bitcoind = bitcoinrpc.connect_to_remote(bitcoind_login, bitcoind_password, host=bitcoind_host, port=bitcoind_port)
+	  
+	def address_list(address_from_db):
+		wallet=bitcoind.getaccount(address_from_db).encode('latin1').decode('utf8')
+		return bitcoind.getaddressesbyaccount(wallet) 
 
 	userwallets = []    
 	userwallets = [{'wallet':bitcoind.getaccount(link.value).encode('latin1').decode('utf8'), 
 					'balance':"{0}".format(str(bitcoind.getbalance(bitcoind.getaccount(link.value).encode('latin1').decode('utf8') ))),
-					'address':link.value} for link in access_user.links if int(link.type_id)==int(bitcoin_link_id)]
+					'addresses':address_list(link.value),
+					#'type_addresses':type(address_list(link.value)),
+					'address_from_db':link.value} 
+					for link in access_user.links 
+					if int(link.type_id)==int(bitcoin_link_id)]
+
 	tpldef.update({'wallets':userwallets})
 
 	total_balance=Decimal('0')
