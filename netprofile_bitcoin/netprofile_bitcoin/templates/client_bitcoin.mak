@@ -1,5 +1,6 @@
 ## -*- coding: utf-8 -*-
 <%inherit file="netprofile_access:templates/client_layout.mak"/>
+
 <script type='text/javascript'>
 function createWallet(result_id, form_id, url) {
         jQuery.ajax({
@@ -590,11 +591,11 @@ function changeNameWallet(result_id, form_id, url) {
     </tr>
 % for w in wallets:
     <tr>
-        <td align="center">${w['wallet']}</td>
-        <td align="center">${w['balance']} ${loc.translate(_("BTC"))}</td>         
-        <td align="center">${w['address']}</td>
+        <td align="center" style="vertical-align:middle">${w['wallet']}</td>
+        <td align="center" style="vertical-align:middle">${w['balance']} ${loc.translate(_("BTC"))}</td>         
+        <td align="center" style="vertical-align:middle">${w['address']}</td>
 
-        <td align="center">
+        <td align="center" style="vertical-align:middle">
             <a data-toggle='modal' href='#modalExport${w['address']}' title="${loc.translate(_("Private Key"))}"     
                onClick="exportPrivKey('${w['address']}','${request.route_url("bitcoin.cl.export")}', 'resp${w['address']}');">
                ${loc.translate(_("Private Key"))}
@@ -622,7 +623,7 @@ function changeNameWallet(result_id, form_id, url) {
             </div>
         </td>
 
-        <td align="center">
+        <td align="center" style="vertical-align:middle">
             <a data-toggle='modal'  href="#modalSend${w['address']}" title="${loc.translate(_("Send"))}"      
                class="btn btn-link" >${loc.translate(_("Send"))}
             </a>
