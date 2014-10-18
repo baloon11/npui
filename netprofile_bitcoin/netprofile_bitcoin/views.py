@@ -383,7 +383,7 @@ def change_name_wallet(request):
 	bitcoin_link_id=cfg.get('netprofile.client.bitcoin.link_id', 1)	
 	bitcoind = bitcoinrpc.connect_to_remote(bitcoind_login, bitcoind_password, host=bitcoind_host, port=bitcoind_port)
 
-	wallets = [bitcoind.getaccount(link.value).encode('latin1').decode('utf8')
+	wallets = [link.account_name
 			   for link in access_user.links if int(link.type_id)==int(bitcoin_link_id)]
 	
 	res={'error_submitting_form':None,
@@ -396,7 +396,7 @@ def change_name_wallet(request):
 	if csrf == request.get_csrf():  
 		old_account = request.POST.get('old_account', '')
 		new_account = string_wallet_name(request.POST.get('new_account', ''))
-		old_account_balance=bitcoind.getbalance(old_account)
+		#old_account_balance=bitcoind.getbalance(old_account)
 
 		if len(old_account)==0:
 			res['old_account_error']=loc.translate(_("Error in the field 'Old wallet name'"))
@@ -414,7 +414,8 @@ def change_name_wallet(request):
 		#entry_in_db=access_user.links
 		#entry_in_db.filter_by(account_name=str(old_account)).first().account_name=new_account
 		#entry_in_db.account_name=new_account
-		entry_in_db=[link for link in access_user.links if str(link.account_name)==old_account]
+		entry_in_db=[link for link in access_user.links 
+					 if str(link.account_name)==old_account and int(link.type_id)==int(bitcoin_link_id)]
 		entry_in_db[0].account_name=new_account
 
 		res['success_change']=loc.translate(_("Change the wallet name has been successful"))
