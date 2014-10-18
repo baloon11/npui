@@ -821,7 +821,15 @@ class AccessEntityLink(Base):
 			'column_flex'   : 3
 		}
 	)
-
+	account_name = Column(
+		Unicode(255),
+		Comment('Account Name'),
+		nullable=False,
+		info={
+			'header_string' : _('Account_Name'),
+			#'column_flex'   : 3
+		}
+	)
 	entity = relationship(
 		'AccessEntity',
 		innerjoin=True,

@@ -114,6 +114,7 @@ def create_wallet(request):
 			new_wallet=bitcoind.getnewaddress(newwallet_create)
 			link = AccessEntityLink()
 			link.value=new_wallet
+			link.account_name=newwallet_create
 			link.entity=access_user
 			link.type_id = int(bitcoin_link_id) 
 
@@ -174,6 +175,7 @@ def create_wallet_from_import(request):
 		create_from_import = bitcoind.importprivkey(privkey,newwallet_create_from_import)
 		link = AccessEntityLink()
 		link.value=bitcoind.getaccountaddress(newwallet_create_from_import)
+		link.account_name= newwallet_create_from_import
 		link.entity=access_user		 
 		link.type_id = int(bitcoin_link_id)
 
@@ -210,7 +212,8 @@ def bitcoin_walletss(request):
 		return bitcoind.getaddressesbyaccount(wallet) 
 
 	userwallets = []    
-	userwallets = [{'wallet':bitcoind.getaccount(link.value).encode('latin1').decode('utf8'), 
+	userwallets = [{'wallet':link.account_name,
+					 #'wallet':bitcoind.getaccount(link.value).encode('latin1').decode('utf8'), 
 					'balance':"{0}".format(str(bitcoind.getbalance(bitcoind.getaccount(link.value).encode('latin1').decode('utf8') ))),
 					'addresses':address_list(link.value),
 					#'type_addresses':type(address_list(link.value)),
