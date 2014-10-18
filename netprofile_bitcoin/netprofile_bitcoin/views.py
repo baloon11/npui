@@ -410,62 +410,15 @@ def change_name_wallet(request):
 			if  new_account == wallet:
 				res['error_not_unique_name']=loc.translate(_("Error. Wallet with the same name already exists."))
 				return res
-#---------------------------------------------------------------
-# Перевод денег жестко привязан к адресу. 
-# При переименовании переносятся и деньги  привязанные к адресу, и деньги привязанные ко всему аккаунту,
-# (то есть у нас две ветки учета денег, которые сливаются(деньги складываются)
-# при создании нового аккаунта и переносе адреса на него)
-# В результате этого суммирования-выходит неправильный баланс для аккаунта.
-# В этом блоке кода ищем в transaction list  переводы на первоначальный адрес
-# (который будет переносится на другой аккаунт) (receive)
-# и сумму этих денег отнимаем от общей суммы на старом аккаунте.
-# при переносе  деньги (receive) снова появятся, но таким образом мы будем их учитывать всего один раз как и нужно.
 
-		# найдем сколько всего в списке транзакций элементов
-		# если count в bitcoind.listtransactions будет больше, чем элементов, то список будет включать 
-		# все транзакции  и длина списка при увеличении count менятся не будет 
-		num_trans=0
-		num_count=1
-		while True:
-			transaction_list_prev =bitcoind.listtransactions(account=old_account,count=num_count-1)
-			transaction_list_next =bitcoind.listtransactions(account=old_account,count=num_count)
-	
-			if len(transaction_list_prev)==len(transaction_list_next):
-				num_trans=num_count
-				break
+		#entry_in_db=access_user.links
+		#entry_in_db.filter_by(account_name=str(old_account)).first().account_name=new_account
+		#entry_in_db.account_name=new_account
+		entry_in_db=[link for link in access_user.links if str(link.account_name)==old_account]
+		entry_in_db[0].account_name=new_account
 
-			num_count+=1
- 
-		transaction_list_full=bitcoind.listtransactions(account=old_account,count=num_trans)
-		sum_transaction_category_receive=Decimal('0')
-		sum_transaction_category_all=Decimal('0')
-
-		sum_transaction_category_all = sum( [transaction.amount
-												for transaction in transaction_list_full] )
-
-		sum_transaction_category_receive = sum( [transaction.amount
-												for transaction in transaction_list_full 
-												if  transaction.category=='receive'] )
-		
-		sum_without_receive=sum_transaction_category_all- sum_transaction_category_receive
-#---------------------------------------------------------------
-
-
-		list_old_account_address=bitcoind.getaddressesbyaccount(old_account)
-		list_addresses_db=[link.value for link in access_user.links if int(link.type_id)==int(bitcoin_link_id)] 
-		
-		for addr_old_account in list_old_account_address:
-			for addr_db in list_addresses_db:
-				if str(addr_old_account)==str(addr_db):     			
-					bitcoind.setaccount(addr_db,new_account)
-					
-					if old_account_balance>Decimal('0'):
-						# итоговая сумма
-						old_account_balance = sum_without_receive
-						bitcoind.move(old_account,new_account,old_account_balance)
-					
-					res['success_change']=loc.translate(_("Change the wallet name has been successful"))
-					return res
+		res['success_change']=loc.translate(_("Change the wallet name has been successful"))
+		return res
 
 	else:
 		res['error_submitting_form']=loc.translate(_('Error submitting form'))
