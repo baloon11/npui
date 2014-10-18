@@ -92,9 +92,19 @@ def create_wallet(request):
 	bitcoin_link_id=cfg.get('netprofile.client.bitcoin.link_id', 1)
 	bitcoind = bitcoinrpc.connect_to_remote(bitcoind_login, bitcoind_password, host=bitcoind_host, port=bitcoind_port)
 
-	wallets = [bitcoind.getaccount(link.value).encode('latin1').decode('utf8')
-			   for link in access_user.links if int(link.type_id)==int(bitcoin_link_id)]
+	wallets=[]
+	all_wallets=[]
+	for link in access_user.links: #find all accounts
+		if int(link.type_id)==int(bitcoin_link_id):
+			all_wallets.append(bitcoind.getaccount(link.value).encode('latin1').decode('utf8'))
+			all_wallets.append(link.account_name)
 
+	for w in all_wallets:#find unique accounts
+		try:
+			wallets.index(w)
+		except ValueError:
+			wallets.append(w)
+ 
 	resp = {'success_create':None,
 			'error_submitting_form':None,                   
 			'error_wallet_name_field':None,
@@ -108,7 +118,7 @@ def create_wallet(request):
 
 			for wallet in wallets:     
 				if newwallet_create == wallet:
-					resp['error_not_unique_name']=loc.translate(_("Error. Wallet with the same name already exists."))
+					resp['error_not_unique_name']=loc.translate(_("Error. Please, choose else name for a new wallet."))
 					return resp
 		
 			new_wallet=bitcoind.getnewaddress(newwallet_create)
@@ -145,8 +155,18 @@ def create_wallet_from_import(request):
 	bitcoin_link_id=cfg.get('netprofile.client.bitcoin.link_id', 1)	
 	bitcoind = bitcoinrpc.connect_to_remote(bitcoind_login, bitcoind_password, host=bitcoind_host, port=bitcoind_port)
 
-	wallets = [bitcoind.getaccount(link.value).encode('latin1').decode('utf8')
-			   for link in access_user.links if int(link.type_id)==int(bitcoin_link_id)]
+	wallets=[]
+	all_wallets=[]
+	for link in access_user.links: #find all accounts
+		if int(link.type_id)==int(bitcoin_link_id):
+			all_wallets.append(bitcoind.getaccount(link.value).encode('latin1').decode('utf8'))
+			all_wallets.append(link.account_name)
+
+	for w in all_wallets:#find unique accounts
+		try:
+			wallets.index(w)
+		except ValueError:
+			wallets.append(w)
 
 	resp = {'success_create': None,
 			'error_submitting_form':None,
@@ -169,7 +189,7 @@ def create_wallet_from_import(request):
 
 		for wallet in wallets:     
 			if newwallet_create_from_import == wallet:
-				resp['error_not_unique_name']=loc.translate(_("Error. Wallet with the same name already exists."))
+				resp['error_not_unique_name']=loc.translate(_("Error. Please, choose else name for a new wallet."))
 				return resp
 
 		create_from_import = bitcoind.importprivkey(privkey,newwallet_create_from_import)
