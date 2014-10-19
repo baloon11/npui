@@ -232,11 +232,9 @@ def bitcoin_walletss(request):
 		return bitcoind.getaddressesbyaccount(wallet) 
 
 	userwallets = []    
-	userwallets = [{'wallet':link.account_name,
-					 #'wallet':bitcoind.getaccount(link.value).encode('latin1').decode('utf8'), 
+	userwallets = [{'wallet':link.account_name, 
 					'balance':"{0}".format(str(bitcoind.getbalance(bitcoind.getaccount(link.value).encode('latin1').decode('utf8') ))),
 					'addresses':address_list(link.value),
-					#'type_addresses':type(address_list(link.value)),
 					'address_from_db':link.value} 
 					for link in access_user.links 
 					if int(link.type_id)==int(bitcoin_link_id)]
@@ -396,12 +394,7 @@ def change_name_wallet(request):
 	sess = DBSession()
 	access_user = sess.query(AccessEntity).filter_by(nick=str(request.user)).first()	
 	cfg = request.registry.settings
-	bitcoind_host = cfg.get('netprofile.client.bitcoind.host')
-	bitcoind_port = cfg.get('netprofile.client.bitcoind.port')
-	bitcoind_login = cfg.get('netprofile.client.bitcoind.login')
-	bitcoind_password = cfg.get('netprofile.client.bitcoind.password')
 	bitcoin_link_id=cfg.get('netprofile.client.bitcoin.link_id', 1)	
-	bitcoind = bitcoinrpc.connect_to_remote(bitcoind_login, bitcoind_password, host=bitcoind_host, port=bitcoind_port)
 
 	wallets = [link.account_name
 			   for link in access_user.links if int(link.type_id)==int(bitcoin_link_id)]
@@ -416,8 +409,7 @@ def change_name_wallet(request):
 	if csrf == request.get_csrf():  
 		old_account = request.POST.get('old_account', '')
 		new_account = string_wallet_name(request.POST.get('new_account', ''))
-		#old_account_balance=bitcoind.getbalance(old_account)
-
+		
 		if len(old_account)==0:
 			res['old_account_error']=loc.translate(_("Error in the field 'Old wallet name'"))
 			return res 			
@@ -431,9 +423,6 @@ def change_name_wallet(request):
 				res['error_not_unique_name']=loc.translate(_("Error. Wallet with the same name already exists."))
 				return res
 
-		#entry_in_db=access_user.links
-		#entry_in_db.filter_by(account_name=str(old_account)).first().account_name=new_account
-		#entry_in_db.account_name=new_account
 		entry_in_db=[link for link in access_user.links 
 					 if str(link.account_name)==old_account and int(link.type_id)==int(bitcoin_link_id)]
 		entry_in_db[0].account_name=new_account
